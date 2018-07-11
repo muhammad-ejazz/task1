@@ -3,13 +3,30 @@ import csv
 
 from weather_data import WeatherData
 
+
 class ParsingFiles:
-    def __init__(self, path):
+    def __init__(self, path, flag, query):
         self.path = path
+        self.flag = flag
+        self.query = query
+        self.months = {
+            '1': 'Jan', '2': 'Feb', '3': 'Mar', '4': 'Apr', '5': 'May', '6': 'Jun',
+            '7': 'Jul', '8': 'Aug', '9': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec'
+        }
         self.all_files_names = self.get_all_files_names()
 
     def get_all_files_names(self):
-        return os.listdir(self.path)
+        files = os.listdir(self.path)
+        if self.flag == '-e':
+            new_files = [file for file in files if self.query in file]
+            return new_files
+
+        if self.flag == '-a' or self.flag == '-c':
+            year_month = self.query.split('/')
+            year_plus_month = "{}_{}".format(year_month[0], self.months[str(int(year_month[1]))])
+            new_files = [file for file in files if year_plus_month in file]
+            return new_files
+
 
     def is_there_not_any_empty_element(self, myList):
         for element in myList:

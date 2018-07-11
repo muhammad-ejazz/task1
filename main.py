@@ -1,34 +1,46 @@
+#!/usr/bin/python3.6
+import sys
 from parsing_class import ParsingFiles
 from calculation_class import CalculatingResults
 from result_data import ResultData
 from report_class import ReportPrinting
 
 if __name__ == "__main__":
-    path = "/home/muhammad/new_task/weatherdata/"
-    parsing_files = ParsingFiles(path)
-    all_weather_readings = parsing_files.reading_files()
-    all_years_plus_months = {}
+    argv = sys.argv
+    if len(argv) == 4:
+        path = argv[1]
+        flag = argv[2]
+        query = argv[3]
 
-    for file_name in all_weather_readings.max_temperature.keys():
-        split_strings = file_name.split('_')
-        year = split_strings[2]
-        month = split_strings[3]
-        if year not in all_years_plus_months:
-            all_years_plus_months[year] = []
-        all_years_plus_months[year].append(month[0:3])
+        parsing_files = ParsingFiles(path, flag, query)
+        all_weather_readings = parsing_files.reading_files()
+        file_names = parsing_files.all_files_names
 
-    calculations_class = CalculatingResults(all_weather_readings, all_years_plus_months)
-    request = input("Enter query: ")
-    if len(request) == 4:
-        calculations_class.year = request
+        calculations_class = CalculatingResults(all_weather_readings, file_names, flag)
+        results = calculations_class.calculations()
+        report_print = ReportPrinting(results, flag)
+        report_print.print()
     else:
-        year_month = request.split('/')
-        calculations_class.year = year_month[0]
-        calculations_class.month = year_month[1]
+        path = argv[1]
+        count = 0
+        queries = []
+        flags = []
+        for arg in argv:
+            if count == 0 or count == 1:
+                count = count + 1
+                continue
+            if count % 2 == 0:
+                flags.append(arg)
+            else:
+                queries.append(arg)
+            count = count + 1
 
-    results = calculations_class.calculations()
+        for index, flag in enumerate(flags):
+            parsing_files = ParsingFiles(path, flag, queries[index])
+            all_weather_readings = parsing_files.reading_files()
+            file_names = parsing_files.all_files_names
 
-    report_print = ReportPrinting(results)
-    report_print.print()
-    if len(request) > 4 and isinstance(results, ResultData):
-        report_print.plot_bar_chart(all_weather_readings, request)
+            calculations_class = CalculatingResults(all_weather_readings, file_names, flag)
+            results = calculations_class.calculations()
+            report_print = ReportPrinting(results, flag)
+            report_print.print()

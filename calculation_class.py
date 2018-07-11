@@ -2,22 +2,13 @@ from result_data import ResultData
 
 
 class CalculatingResults:
-    def __init__(self, all_weather_readings, all_years_plus_months):
+    def __init__(self, all_weather_readings, file_names, flag):
         self.all_weather_readings = all_weather_readings
-        self.all_years_plus_months = all_years_plus_months
-        self.year = None
-        self.month = None
-        self.months = {
-            '1': 'Jan', '2': 'Feb', '3': 'Apr', '4': 'Mar', '5': 'May', '6': 'Jun',
-            '7': 'Jul', '8': 'Aug', '9': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec'
-        }
+        self.file_names = file_names
+        self.flag = flag
 
     def calculations(self):
-        if self.year is not None and self.month is None:
-            if self.year not in self.all_years_plus_months:
-                return "Weather data for this year is not available!"
-
-            months_in_year = self.all_years_plus_months[self.year]
+        if self.flag == '-e':
             max_temperature = -1000
             min_temperature = 1000
             max_humidity = -1000
@@ -28,9 +19,8 @@ class CalculatingResults:
             min_temp_month = ''
             max_humid_month = ''
 
-            for month in months_in_year:
-                file_name = "lahore_weather_{}_{}".format(self.year, month)
-
+            for file_name in self.file_names:
+                file_name  = file_name.replace('.txt', '')
                 if self.all_weather_readings.max_temperature[file_name]:
                     prev_max_temp = max_temperature
                     prev_min_temp = min_temperature
@@ -41,15 +31,15 @@ class CalculatingResults:
 
                     if prev_max_temp != max_temperature:
                         max_temp_day = self.all_weather_readings.max_temperature[file_name].index(max_temperature)
-                        max_temp_month = month
+                        max_temp_month = file_name.split('_')[3]
 
                     if prev_min_temp != min_temperature:
                         min_temp_day = self.all_weather_readings.min_temperature[file_name].index(min_temperature)
-                        min_temp_month = month
+                        min_temp_month = file_name.split('_')[3]
 
                     if prev_max_humid != max_humidity:
                         max_humid_day = self.all_weather_readings.max_humidity[file_name].index(max_humidity)
-                        max_humid_month = month
+                        max_humid_month = file_name.split('_')[3]
 
             results = ResultData()
             results.year.append("{}C on {} {}".format(max_temperature, max_temp_month, max_temp_day+1))
@@ -57,15 +47,8 @@ class CalculatingResults:
             results.year.append("{}% on {} {}".format(max_humidity, max_humid_month, max_humid_day+1))
 
             return results
-        else:
-            if self.year not in self.all_years_plus_months:
-                return "Weather data for this year is not available!"
-
-            local_month = self.months[self.month]
-            if local_month not in self.all_years_plus_months[self.year]:
-                return "Weather data for this month of {} is not available!".format(self.year)
-
-            file_name = "lahore_weather_{}_{}".format(self.year, local_month)
+        elif self.flag == '-a':
+            file_name = self.file_names[0].replace('.txt', '')
             if self.all_weather_readings.max_temperature[file_name]:
                 max_temp_sum = sum(self.all_weather_readings.max_temperature[file_name][:])
                 avg_max_temp = max_temp_sum / len(self.all_weather_readings.max_temperature[file_name])
@@ -81,8 +64,28 @@ class CalculatingResults:
                 results.month.append("{}C".format(avg_min_temp))
                 results.month.append("{}%".format(avg_mean_humidity))
                 return results
-            else:
-                return "Weather data for this month of {} is not available!".format(self.year)
+        else:
+            file_name = self.file_names[0].replace('.txt', '')
+            if self.all_weather_readings.max_temperature[file_name]:
+                max_temp_list = self.all_weather_readings.max_temperature[file_name]
+                min_temp_list = self.all_weather_readings.min_temperature[file_name]
+                results = ResultData()
+
+                results.month.append("{} {}".format(file_name.split('_')[3], file_name.split('_')[2]))
+                results.month.append('\n')
+
+                results.bonus.append("\nBonus Task\n")
+
+                for index, value in enumerate(max_temp_list):
+                    results.month.append("{}{} {} {}{}".format('\033[91m', index+1, '+'*value, value, 'C'))
+                    results.month.append("{}{} {} {}{}".format('\033[94m', index+1,
+                                                               '+'*min_temp_list[index], min_temp_list[index], 'C'))
+
+                    results.bonus.append("{} {}{}{}{} {}{}-{}{}".format(index+1, '\033[94m', '+'*min_temp_list[index],
+                                                                        '\033[91m',  '+' * value, min_temp_list[index],
+                                                                        'C', value, 'C'))
+
+                return results
 
 
 
